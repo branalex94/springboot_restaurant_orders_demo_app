@@ -17,6 +17,7 @@
 | `DB_PASSWORD` | Contraseña de PostgreSQL | Obligatoria |
 | `RSA_PRIVATE_KEY_LOCATION` | Ubicación de la clave privada RSA | `classpath:keys/private_key.pem` |
 | `RSA_PUBLIC_KEY_LOCATION` | Ubicación de la clave pública RSA | `classpath:keys/public_key.pem` |
+| `CORS_ALLOWED_ORIGINS` | Orígenes web permitidos, separados por comas | `http://localhost:4200` |
 
 Spring Boot resuelve los placeholders al iniciar. No carga archivos `.env` automáticamente. En local, las keys de clase están en `src/main/resources/keys/`; esa carpeta está ignorada por Git. Si no tienes una pareja local, puedes generarla con OpenSSL:
 
@@ -51,6 +52,8 @@ En Eclipse, abre **Run > Run Configurations...**, selecciona **Spring Boot App**
 ## Producción
 
 Configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD` en el gestor de secretos o en el entorno del servicio que ejecute la aplicación. No los guardes en `application.properties`, `pom.xml` ni en el repositorio. Por ejemplo, el servicio puede ejecutar:
+
+Si el frontend se sirve desde otro origen, configura `CORS_ALLOWED_ORIGINS` con el origen exacto del frontend (o la lista de orígenes QA/producción separados por comas). No uses `*` en producción.
 
 ```text
 java -jar target/spring_api_restaurant_demo-0.0.1-SNAPSHOT.jar
