@@ -15,10 +15,10 @@ import org.springframework.core.io.Resource;
 
 @Configuration
 public class RsaKeyConfig {
-	@Value("classpath:keys/private_key.pem")
+	@Value("${security.jwt.private-key-location}")
 	private Resource privateKeyResource;
 
-	@Value("classpath:keys/public_key.pem")
+	@Value("${security.jwt.public-key-location}")
 	private Resource publicKeyResource;
 
 	@Bean
