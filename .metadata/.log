@@ -1,0 +1,13 @@
+!SESSION 2026-08-03 15:48:56.871 -----------------------------------------------
+eclipse.buildId=4.33.0.20240905-0613
+java.version=23.0.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-03 15:49:03.798
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-03 15:49:24.470
+!MESSAGE Logback config file: C:\Users\Usuario\Desktop\proyectos\java\spring_api_restaurant_demo\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.6.1.20240411-1122.xml
