@@ -42,10 +42,11 @@ Las tareas están ordenadas para resolver primero los contratos que bloquean los
 
 ### 3. Productos y clientes
 
-- [ ] Añadir `active` a los DTOs de producto y cliente, o acordar endpoints/listados que distingan explícitamente activos, inactivos y totales.
-- [ ] Definir la semántica de `GET /api/products` y `GET /api/clients`: no presentar `findAll()` como conteo de activos si incluye elementos desactivados.
-- [ ] Añadir `phone` y `email` a `ClientResponseDto`, tanto para listado como para detalle, para que la interfaz pueda mostrar y editar contactos sin perderlos al recargar.
-- [ ] Mantener `DELETE` como desactivación si esa es la regla de negocio; documentar el estado devuelto y asegurar que la UI puede reconocerlo de forma persistente.
+- [x] Añadir `active` a `ProductResponseDto` y `ClientResponseDto`; las altas nuevas inicializan ambas entidades como activas.
+- [x] Definir la semántica de `GET /api/products` y `GET /api/clients`: los listados conservan `findAll()` por compatibilidad y cada fila expone `active`; el consumidor debe filtrar explícitamente. Los totales de los listados incluyen activos e inactivos.
+- [x] Añadir `phone` y `email` a `ClientResponseDto` en listado y detalle para que la interfaz pueda mostrar y editar contactos.
+- [x] Mantener `DELETE` como desactivación y exponer `active=false` en los DTOs/listados para reconocer el estado persistente.
+- [ ] Inspeccionar y planear backfill de filas existentes antes del despliegue: el código previo no inicializaba `active=true`, por lo que algunas filas `false` pueden ser registros válidos y no se deben reactivar en masa sin revisar los datos.
 - [ ] Decidir cómo se conserva la identidad histórica de productos/clientes desactivados que aparecen en órdenes anteriores.
 
 **Criterio de cierre:** los listados explican el estado de cada entidad y el CRUD de cliente preserva nombre, teléfono y correo al editar y volver a cargar.

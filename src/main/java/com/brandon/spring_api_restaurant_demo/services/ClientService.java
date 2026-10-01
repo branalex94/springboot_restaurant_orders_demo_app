@@ -41,6 +41,7 @@ public class ClientService {
 		LocalDateTime creationDate = LocalDateTime.now();
 		Client client = new Client(dto.clientName().trim(), dto.email().trim(),
 				dto.phone().trim(), creationDate, creationDate);
+		client.setActive(true);
 		clientRepository.save(client);
 		return new ApiResponse<>("OK", HttpStatus.CREATED, null, "");
 	}
@@ -77,6 +78,7 @@ public class ClientService {
 	}
 
 	private ClientResponseDto buildDtoFromClient(Client client) {
-		return new ClientResponseDto(client.getId(), client.getClientName());
+		return new ClientResponseDto(client.getId(), client.getClientName(),
+				client.getPhone(), client.getEmail(), client.isActive());
 	}
 }
