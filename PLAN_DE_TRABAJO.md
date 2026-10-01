@@ -33,10 +33,10 @@ Las tareas están ordenadas para resolver primero los contratos que bloquean los
 
 ### 2. Errores y validación
 
-- [ ] Cambiar `ApiResponseErrorFormatting` para que `MethodArgumentNotValidException` responda HTTP 4xx coherente. Actualmente devuelve HTTP 500 aunque el `statusCode` del cuerpo represente el error de validación.
-- [ ] Definir un formato estable de errores por campo en `ApiResponse`, por ejemplo `errors: [{ field, message }]`, y documentar cómo se distinguen errores de validación, negocio y servidor.
-- [ ] No incluir valores sensibles ni cuerpos de request en mensajes/logs de error.
-- [ ] Probar HTTP status y cuerpo para errores de validación, autenticación, autorización, recurso inexistente y errores internos.
+- [x] Cambiar `ApiResponseErrorFormatting` para que `MethodArgumentNotValidException` responda HTTP 400 coherente.
+- [x] Definir `ApiResponse.errors: [{ field, message }]`; los errores de validación usan `code: VALIDATION_ERROR` y un mensaje general estable.
+- [x] No incluir valores rechazados ni cuerpos de request en la respuesta de validación.
+- [ ] Ejecutar tests para status/cuerpo de validación y los casos de autenticación, autorización, recurso inexistente y errores internos. El test unitario de validación ya está escrito; Maven requiere un JDK disponible.
 
 **Criterio de cierre:** status HTTP y cuerpo coinciden; el frontend puede asociar errores de validación a campos sin depender de textos improvisados.
 

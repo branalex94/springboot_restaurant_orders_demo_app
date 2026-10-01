@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.brandon.spring_api_restaurant_demo.dtos.ApiResponse;
+import com.brandon.spring_api_restaurant_demo.dtos.ApiFieldError;
+
+import java.util.Comparator;
+import java.util.List;
 
 @RestControllerAdvice
 public class ApiResponseErrorFormatting {
@@ -46,12 +50,17 @@ public class ApiResponseErrorFormatting {
 	public ResponseEntity<ApiResponse<Void>> handleArgumentInvalidException(
 			MethodArgumentNotValidException ex) {
 
-		System.out.println(ex);
+		List<ApiFieldError> errors = ex.getBindingResult().getFieldErrors()
+				.stream()
+				.sorted(Comparator.comparing(error -> error.getField()))
+				.map(error -> new ApiFieldError(error.getField(),
+						error.getDefaultMessage() == null ? "Invalid value"
+								: error.getDefaultMessage()))
+				.toList();
 
-		ApiResponse<Void> response = new ApiResponse<>(ex.getBody().getTitle(),
-				HttpStatus.valueOf(ex.getStatusCode().value()), null, "ERROR");
+		ApiResponse<Void> response = new ApiResponse<>("Validation failed",
+				HttpStatus.BAD_REQUEST, null, "VALIDATION_ERROR", errors);
 
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(response);
+		return ResponseEntity.badRequest().body(response);
 	}
 }
