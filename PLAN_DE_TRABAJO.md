@@ -98,3 +98,25 @@ El contrato detallado y el ejemplo JSON están en [PLAN_METRICAS_DASHBOARD.md](P
 4. Acordar moneda, fechas, zona y semántica de ventas.
 5. Implementar y probar `/api/metrics/dashboard`.
 6. Añadir pipeline Jenkins parametrizado y completar pruebas/seguridad.
+
+## Suite de pruebas backend
+
+**Estado:** Pendiente. Actualmente no hay clases de prueba Java en `src/test`; crear la suite antes de dar por cerrados los contratos y antes del primer despliegue.
+
+### Alcance
+
+- [ ] Confirmar/configurar JUnit 5, Spring Boot Test, Mockito y un perfil de pruebas sin credenciales externas.
+- [ ] **Unitarias de servicios:** auth (no filtrar contraseñas, tokens y errores), refresh (rotación, expirado, revocado y repetido), logout (revocación e idempotencia), CRUD de productos/clientes, estado `active`, transiciones/cancelación de órdenes y cálculo del total usando precio histórico por cantidad.
+- [ ] **Persistencia/repositorios:** probar filtros de activos y consultas agregadas con PostgreSQL real de pruebas, preferiblemente Testcontainers; cubrir rangos de fechas, meses sin ventas, productos históricos y orden/límite de resultados.
+- [ ] **Web/MVC:** probar status HTTP, envoltorio `ApiResponse`, DTOs y validación para auth, productos, clientes, órdenes y `/api/metrics/dashboard`.
+- [ ] **Seguridad:** verificar rutas públicas/privadas, JWT ausente/inválido/válido, revocación de refresh, CORS/preflight permitido y que respuestas/logs no revelen secretos.
+- [ ] **Integración de flujos críticos:** registrar/iniciar sesión/renovar/cerrar sesión; CRUD con desactivación; crear una orden, actualizar estado, cancelar y consultar historial; consumir métricas vacías y con datos.
+- [ ] Usar reloj fijo o controlable para expiraciones y fechas, datos de prueba aislados y limpieza determinista entre casos.
+- [ ] Ejecutar `./mvnw test` (Unix) o `mvnw.cmd test` (Windows) localmente y en Jenkins; hacer que el pipeline falle si cualquier prueba falla.
+
+### Criterios de aceptación
+
+- Las pruebas unitarias de reglas de negocio y errores son deterministas y no requieren credenciales ni servicios externos; las pruebas de repositorio usan una base de datos aislada.
+- Las consultas específicas de PostgreSQL se prueban contra el mismo motor que producción, no solo contra mocks o una base distinta.
+- Cada endpoint tiene cobertura de éxito, validación y autorización aplicable; los estados HTTP coinciden con `ApiResponse.statusCode`.
+- La suite se ejecuta en CI antes de empaquetar/desplegar y deja evidencia del resultado.
