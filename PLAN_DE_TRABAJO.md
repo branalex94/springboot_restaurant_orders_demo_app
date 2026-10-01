@@ -16,16 +16,17 @@ Las tareas están ordenadas para resolver primero los contratos que bloquean los
 - El backend no tiene un endpoint global de órdenes ni agregaciones de ventas.
 - `/api/**` exige JWT. Los endpoints de métricas deberán conservar la autenticación.
 - Las respuestas usan `ApiResponse<T>` (`msg`, `statusCode`, `data`, `code`).
-- `AuthService.validateLogin` ya aparece localmente actualizado para devolver `null` en `ApiResponse.code` en vez de copiar la contraseña; esa modificación de `AuthService.java` sigue pendiente de commit.
+- `AuthService.validateLogin` devuelve `null` en `ApiResponse.code` y hay una prueba unitaria para evitar volver a filtrar la contraseña; la ejecución Maven sigue pendiente porque el entorno actual no tiene JDK configurado.
 
 ## Tareas
 
 ### 1. Autenticación y sesión
 
-- [ ] Confirmar, probar y versionar la corrección para que la respuesta de login nunca incluya la contraseña en `code`.
+- [x] Corregir la respuesta de login para que no copie la contraseña en `ApiResponse.code` y añadir una prueba unitaria.
+- [ ] Ejecutar las pruebas Maven de autenticación y versionar el cambio después de validarlas.
 - [ ] Definir el propósito de `idToken`. Actualmente el login devuelve una cadena vacía; documentar su uso o retirarlo del contrato de respuesta.
-- [ ] Revocar el refresh token vigente en `POST /api/auth/logout`. Alinear si el token se recibe en el cuerpo durante la transición o mediante cookie HttpOnly cuando backend y frontend migren al patrón acordado.
-- [ ] Mantener la rotación y expiración del refresh token; probar token inválido, revocado, expirado, repetido y logout idempotente.
+- [x] Revocar idempotentemente el refresh token vigente en `POST /api/auth/logout`, recibiéndolo en el cuerpo durante la transición. El frontend obtiene el único token persistido temporalmente desde `sessionStorage`; al migrar a cookies HttpOnly, cambiar el contrato para leer la cookie y eliminar el cuerpo.
+- [ ] Mantener la rotación y expiración del refresh token; probar token inválido, revocado, expirado, repetido y logout idempotente. La implementación y tests focalizados ya están escritos; ejecutar Maven cuando haya un JDK configurado.
 - [ ] Mantener autenticación JWT en recursos protegidos y excluir credenciales/tokens de logs y respuestas de error.
 
 **Criterio de cierre:** iniciar sesión no filtra credenciales; renovar rota el refresh token; logout invalida la sesión server-side.

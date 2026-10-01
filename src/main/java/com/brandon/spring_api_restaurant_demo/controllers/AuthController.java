@@ -38,8 +38,10 @@ public class AuthController {
 	}
 
 	@PostMapping("logout")
-	public ResponseEntity<?> logout() {
-		return ResponseEntity.status(HttpStatus.OK).body(authService.logout());
+	public ResponseEntity<?> logout(
+			@Valid @RequestBody RefreshTokenRequestDto dto) {
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(authService.logout(dto));
 	}
 
 	@PostMapping("account-recovery")

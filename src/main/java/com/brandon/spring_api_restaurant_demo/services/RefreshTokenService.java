@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -74,6 +75,18 @@ public class RefreshTokenService {
 		refreshToken.setRevoked(true);
 		refreshToken.setUpdateddAt(LocalDateTime.now());
 		refreshTokenRepository.save(refreshToken);
+	}
+
+	@Transactional
+	public void revokeIfPresent(String rawRefreshToken) {
+		if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+			return;
+		}
+
+		String tokenHash = hashToken(rawRefreshToken);
+		Optional<RefreshToken> storedToken = refreshTokenRepository
+				.findByTokenHash(tokenHash);
+		storedToken.filter(token -> !token.isRevoked()).ifPresent(this::revoke);
 	}
 
 	public String create(User user) {

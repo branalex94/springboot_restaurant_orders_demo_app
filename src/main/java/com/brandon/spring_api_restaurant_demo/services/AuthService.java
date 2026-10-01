@@ -45,7 +45,7 @@ public class AuthService {
 		String refreshToken = refreshTokenService.create(user);
 		LoginResponseDto tokens = new LoginResponseDto("", token, refreshToken);
 		return new ApiResponse<LoginResponseDto>("OK", HttpStatus.OK, tokens,
-				password);
+				null);
 	}
 
 	public ApiResponse<?> register(RegisterUserRequestDto dto) {
@@ -56,7 +56,8 @@ public class AuthService {
 		return validateLogin(dto.username(), dto.password());
 	}
 
-	public ApiResponse<?> logout() {
+	public ApiResponse<?> logout(RefreshTokenRequestDto dto) {
+		refreshTokenService.revokeIfPresent(dto.refreshToken());
 		return new ApiResponse<>("OK", HttpStatus.OK, null, "");
 	}
 
