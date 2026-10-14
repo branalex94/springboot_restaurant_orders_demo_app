@@ -31,7 +31,7 @@ public class Product {
 	LocalDateTime updatedAt;
 
 	@Column
-	boolean active;
+	int active;
 
 	public Product() {
 
@@ -85,11 +85,11 @@ public class Product {
 		this.updatedAt = updatedAt;
 	}
 
-	public boolean isActive() {
+	public int isActive() {
 		return active;
 	}
 
-	public void setActive(boolean active) {
+	public void setActive(int active) {
 		this.active = active;
 	}
 

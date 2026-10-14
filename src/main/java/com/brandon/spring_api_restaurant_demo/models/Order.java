@@ -42,8 +42,8 @@ public class Order {
 	@Column
 	LocalDateTime updatedAt;
 
-	@Column
-	boolean active;
+	@Column(nullable = false)
+	int active;
 
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	List<OrderItem> items = new ArrayList<>();
@@ -92,11 +92,11 @@ public class Order {
 		this.updatedAt = updatedAt;
 	}
 
-	public boolean isActive() {
+	public int isActive() {
 		return active;
 	}
 
-	public void setActive(boolean active) {
+	public void setActive(int active) {
 		this.active = active;
 	}
 

@@ -3,9 +3,12 @@ package com.brandon.spring_api_restaurant_demo.services;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
+import java.util.List;
 
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import com.brandon.spring_api_restaurant_demo.models.Role;
 import com.brandon.spring_api_restaurant_demo.models.User;
 
 import io.jsonwebtoken.JwtException;
@@ -25,8 +28,10 @@ public class JwtService {
 
 		// 60 minutos de expiracion
 		Date expirationTimeout = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
-		System.out.println(expirationTimeout);
+		List<String> roles = user.getRoles().stream().map(Role::getName).toList();
+		System.out.println(roles);
 		return Jwts.builder().subject(user.getUsername()).issuedAt(new Date()).expiration(expirationTimeout)
+				.claim("roles", roles)
 				.signWith(privateKey).compact();
 	}
 

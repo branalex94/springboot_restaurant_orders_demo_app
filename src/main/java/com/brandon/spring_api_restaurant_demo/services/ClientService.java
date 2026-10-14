@@ -41,7 +41,7 @@ public class ClientService {
 		LocalDateTime creationDate = LocalDateTime.now();
 		Client client = new Client(dto.clientName().trim(), dto.email().trim(),
 				dto.phone().trim(), creationDate, creationDate);
-		client.setActive(true);
+		client.setActive(1);
 		clientRepository.save(client);
 		return new ApiResponse<>("OK", HttpStatus.CREATED, null, "");
 	}
@@ -65,7 +65,7 @@ public class ClientService {
 	public ApiResponse<?> disableClient(Long id) {
 		Client client = findById(id);
 		client.setUpdatedAt(LocalDateTime.now());
-		client.setActive(false);
+		client.setActive(0);
 
 		clientRepository.save(client);
 		return new ApiResponse<>("OK", HttpStatus.OK, null, "");

@@ -46,12 +46,11 @@ public class User {
 	@Column
 	LocalDateTime updatedAt;
 
-	@Column
-	Boolean active;
+	@Column(nullable = false)
+	int active;
 
-	public User(String username, String password, String email, String phone,
-			String firstName, String lastName, LocalDateTime createdAt,
-			LocalDateTime updatedAt, Boolean active) {
+	public User(String username, String password, String email, String phone, String firstName, String lastName,
+			LocalDateTime createdAt, LocalDateTime updatedAt, int active) {
 		this.username = username;
 		this.password = password;
 		this.email = email;
@@ -143,7 +142,7 @@ public class User {
 		this.updatedAt = updatedAt;
 	}
 
-	public Boolean getActive() {
+	public int getActive() {
 		return active;
 	}
 
@@ -151,8 +150,15 @@ public class User {
 		return roles;
 	}
 
-	public void setActive(Boolean active) {
+	public void setActive(int active) {
 		this.active = active;
 	}
 
+	public void addRole(Role role) {
+		this.roles.add(role);
+	}
+
+	public void removeRole(Role role) {
+		this.roles.remove(role);
+	}
 }

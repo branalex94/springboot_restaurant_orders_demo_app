@@ -35,8 +35,8 @@ public class Client {
 	@Column
 	LocalDateTime updatedAt;
 
-	@Column
-	boolean active;
+	@Column(nullable = false)
+	int active;
 
 	@OneToMany(mappedBy = "client")
 	private List<Order> orders = new ArrayList<>();
@@ -103,11 +103,11 @@ public class Client {
 		this.updatedAt = updatedAt;
 	}
 
-	public boolean isActive() {
+	public int isActive() {
 		return active;
 	}
 
-	public void setActive(boolean active) {
+	public void setActive(int active) {
 		this.active = active;
 	}
 

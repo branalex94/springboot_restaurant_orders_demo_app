@@ -17,7 +17,9 @@ import com.brandon.spring_api_restaurant_demo.dtos.auth.ChangePasswordRequestDto
 import com.brandon.spring_api_restaurant_demo.dtos.users.RegisterUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.UpdateUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.UserResponseDto;
+import com.brandon.spring_api_restaurant_demo.models.Role;
 import com.brandon.spring_api_restaurant_demo.models.User;
+import com.brandon.spring_api_restaurant_demo.repositories.RoleRepository;
 import com.brandon.spring_api_restaurant_demo.repositories.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -27,33 +29,35 @@ public class UserService {
 
 	private final CryptoService cryptoService;
 	private final UserRepository userRepository;
+	private final RoleRepository roleRepository;
 	private final JwtService jwtService;
 
-	public UserService(CryptoService cryptoService,
-			UserRepository userRepository, JwtService jwtService) {
+	public UserService(CryptoService cryptoService, UserRepository userRepository, JwtService jwtService,
+			RoleRepository roleRepository) {
 		this.cryptoService = cryptoService;
 		this.userRepository = userRepository;
+		this.roleRepository = roleRepository;
 		this.jwtService = jwtService;
 	}
 
 	public ApiResponse<UserResponseDto> createUser(RegisterUserRequestDto dto) {
 		try {
+			Role userRole = roleRepository.findByName("USER")
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role not found"));
 			User newUser = buildUserFromDto(dto);
+			newUser.addRole(userRole);
 			userRepository.saveAndFlush(newUser);
 		} catch (DataIntegrityViolationException e) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT,
-					"No fue posible crear la cuenta");
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "No fue posible crear la cuenta");
 		}
-		return new ApiResponse<UserResponseDto>("OK", HttpStatus.CREATED, null,
-				"");
+		return new ApiResponse<UserResponseDto>("OK", HttpStatus.CREATED, null, "");
 	}
 
 	public void validateUserValidToCreate(RegisterUserRequestDto dto) {
 		Optional<User> findUser = userRepository.findByUsername(dto.username());
 
 		if (findUser.isPresent()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Invalid user creation");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user creation");
 		}
 
 	}
@@ -62,32 +66,28 @@ public class UserService {
 		validateUserValidToCreate(dto);
 		LocalDateTime creationDate = LocalDateTime.now();
 		String hashedPassword = this.cryptoService.hashPassword(dto.password());
-		User newUser = new User(dto.username().trim(), hashedPassword,
-				dto.email().trim(), dto.phone().trim(), dto.firstName().trim(),
-				dto.lastName().trim(), creationDate, creationDate, true);
+		User newUser = new User(dto.username().trim(), hashedPassword, dto.email().trim(), dto.phone().trim(),
+				dto.firstName().trim(), dto.lastName().trim(), creationDate, creationDate, 1);
+		System.out.println(newUser.getActive());
 		return newUser;
 	}
 
 	public String buildUserFullName(User user) {
-		return Stream.of(user.getFirstName(), user.getLastName())
-				.filter(Objects::nonNull).filter(name -> !name.isBlank())
-				.collect(Collectors.joining(" "));
+		return Stream.of(user.getFirstName(), user.getLastName()).filter(Objects::nonNull)
+				.filter(name -> !name.isBlank()).collect(Collectors.joining(" "));
 	}
 
 	public UserResponseDto buildResponseDtoFromUser(User user) {
-		UserResponseDto userDto = new UserResponseDto(user.getId(),
-				user.getUsername(), user.getEmail(), user.getFirstName(),
-				user.getLastName(), buildUserFullName(user),
-				user.getCreatedAt(), user.getUpdatedAt());
+		UserResponseDto userDto = new UserResponseDto(user.getId(), user.getUsername(), user.getEmail(),
+				user.getFirstName(), user.getLastName(), buildUserFullName(user), user.getCreatedAt(),
+				user.getUpdatedAt());
 		return userDto;
 	}
 
 	public ApiResponse<List<UserResponseDto>> getUsers() {
-		List<UserResponseDto> allUsers = userRepository.findAll().stream()
-				.filter(u -> u.getActive() == true)
+		List<UserResponseDto> allUsers = userRepository.findAll().stream().filter(u -> u.getActive() == 1)
 				.map(u -> buildResponseDtoFromUser(u)).toList();
-		ApiResponse<List<UserResponseDto>> usersApiResponse = new ApiResponse<>(
-				"OK", HttpStatus.OK, allUsers, "");
+		ApiResponse<List<UserResponseDto>> usersApiResponse = new ApiResponse<>("OK", HttpStatus.OK, allUsers, "");
 
 		return usersApiResponse;
 
@@ -101,14 +101,12 @@ public class UserService {
 
 		User user = findById(id);
 
-		return new ApiResponse<>("OK", HttpStatus.OK,
-				buildResponseDtoFromUser(user), "");
+		return new ApiResponse<>("OK", HttpStatus.OK, buildResponseDtoFromUser(user), "");
 	}
 
 	public User findById(Long id) {
-		return userRepository.findById(id).orElseThrow(
-				() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-						"User not found"));
+		return userRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	public ApiResponse<Void> updateUser(Long id, UpdateUserRequestDto dto) {
@@ -145,12 +143,12 @@ public class UserService {
 
 	public ApiResponse<Void> removeUser(Long id) {
 
-		changeUserActiveState(id, false);
+		changeUserActiveState(id, 0);
 		return new ApiResponse<>("OK", HttpStatus.OK, null, "");
 
 	}
 
-	public void changeUserActiveState(Long id, boolean state) {
+	public void changeUserActiveState(Long id, int state) {
 		User user = findById(id);
 
 		LocalDateTime updateTime = LocalDateTime.now();
@@ -161,32 +159,39 @@ public class UserService {
 	}
 
 	public User getUserByUsername(String username) {
-		return userRepository.findByUsername(username).orElseThrow(
-				() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-						"User not found"));
+		return userRepository.findByUsername(username)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	@Transactional
 	public void changePassword(String authorizationToken, ChangePasswordRequestDto dto) {
 		String token = authorizationToken.substring(7);
 		Boolean isTokenExpired = jwtService.isTokenExpired(token);
-		if(isTokenExpired) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Invalid parameters");
+		if (isTokenExpired) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters");
 		}
 		String usernameSubject = jwtService.extractUsername(token);
-		User currentUser = userRepository.findByUsername(usernameSubject).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-				"Invalid parameters"));
+		User currentUser = userRepository.findByUsername(usernameSubject)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters"));
 		Boolean ok = cryptoService.validatePassword(dto.currentPassword(), currentUser.getPassword());
-		if(!ok) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Invalid parameters");
+		if (!ok) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters");
 		}
-		
+
 		LocalDateTime timestamp = LocalDateTime.now();
 		String hashedPassword = cryptoService.hashPassword(dto.newPassword());
 		currentUser.setPassword(hashedPassword);
 		currentUser.setUpdatedAt(timestamp);
 	}
 
+	@Transactional
+	public void addRole(Long userId, Long roleId) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
+
+		Role role = roleRepository.findById(roleId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role not found"));
+
+		user.addRole(role);
+	}
 }

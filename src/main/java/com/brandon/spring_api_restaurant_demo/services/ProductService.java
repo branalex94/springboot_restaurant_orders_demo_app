@@ -27,7 +27,7 @@ public class ProductService {
 		LocalDateTime creationDate = LocalDateTime.now();
 		Product product = new Product(dto.name(), dto.unitPrice(), creationDate,
 				creationDate);
-		product.setActive(true);
+		product.setActive(1);
 		productRepository.save(product);
 		return new ApiResponse<>("OK", HttpStatus.CREATED, null, "");
 	}
@@ -60,7 +60,7 @@ public class ProductService {
 
 	public ApiResponse<?> disableProduct(Long id) {
 		Product product = findById(id);
-		product.setActive(false);
+		product.setActive(0);
 		product.setUpdatedAt(LocalDateTime.now());
 		productRepository.save(product);
 		return new ApiResponse<>("OK", HttpStatus.OK,

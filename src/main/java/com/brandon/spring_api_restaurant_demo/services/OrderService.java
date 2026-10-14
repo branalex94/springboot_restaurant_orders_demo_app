@@ -116,7 +116,7 @@ public class OrderService {
 
 	public ApiResponse<?> cancelOrder(Long id) {
 		Order order = findById(id);
-		order.setActive(false);
+		order.setActive(0);
 		order.setOrderStatus(OrderStatus.CANCELLED);
 		updateOrderStatusHistory(order, OrderStatus.CANCELLED);
 		order.setUpdatedAt(LocalDateTime.now());
