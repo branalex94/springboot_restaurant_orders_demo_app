@@ -147,6 +147,10 @@ public class User {
 		return active;
 	}
 
+	public Set<Role> getRoles() {
+		return roles;
+	}
+
 	public void setActive(Boolean active) {
 		this.active = active;
 	}

@@ -23,17 +23,28 @@ public class JwtService {
 
 	public String generateToken(User user) {
 
-		Date expirationTimeout = new Date(
-				System.currentTimeMillis() + 1000 * 60 * 60);
+		// 60 minutos de expiracion
+		Date expirationTimeout = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
 		System.out.println(expirationTimeout);
-		return Jwts.builder().subject(user.getUsername()).issuedAt(new Date())
-				.expiration(expirationTimeout).signWith(privateKey).compact();
+		return Jwts.builder().subject(user.getUsername()).issuedAt(new Date()).expiration(expirationTimeout)
+				.signWith(privateKey).compact();
 	}
 
 	public String extractUsername(String token) {
 
-		return Jwts.parser().verifyWith(publicKey).build()
-				.parseSignedClaims(token).getPayload().getSubject();
+		return Jwts.parser().verifyWith(publicKey).build().parseSignedClaims(token).getPayload().getSubject();
+	}
+
+	public boolean isTokenExpired(String token) {
+		try {
+			Date expiration = Jwts.parser().verifyWith(publicKey).build().parseSignedClaims(token).getPayload()
+					.getExpiration();
+
+			return expiration.before(new Date());
+
+		} catch (RuntimeException e) {
+			return true;
+		}
 	}
 
 	public boolean isTokenValid(String token) {

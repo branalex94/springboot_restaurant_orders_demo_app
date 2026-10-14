@@ -45,6 +45,10 @@ public class OrderStatusHistory {
 		this.createdAt = createdAt;
 		this.updateddAt = updateddAt;
 	}
+	
+	public OrderStatusHistory( ) {
+		
+	}
 
 	public Long getId() {
 		return id;

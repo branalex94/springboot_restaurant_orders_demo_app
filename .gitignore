@@ -34,3 +34,4 @@ build/
 
 ### SECRETS ###
 /src/main/resources/keys/*.pem
+.env

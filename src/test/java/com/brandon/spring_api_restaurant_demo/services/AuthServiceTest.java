@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,9 +41,11 @@ class AuthServiceTest {
 	void successfulLoginDoesNotReturnTheSubmittedPassword() {
 		String password = "correct-horse-battery";
 		User user = org.mockito.Mockito.mock(User.class);
-		when(userService.getUserByUsername("manager")).thenReturn(user);
+		when(userService.getByUsername("manager")).thenReturn(Optional.of(user));
 		when(user.getActive()).thenReturn(true);
-		when(cryptoService.validatePassword(password, null)).thenReturn(true);
+		when(user.getPassword()).thenReturn("stored-hash");
+		when(cryptoService.validatePassword(password, "stored-hash"))
+				.thenReturn(true);
 		when(jwtService.generateToken(user)).thenReturn("access-token");
 		when(refreshTokenService.create(user)).thenReturn("refresh-token");
 

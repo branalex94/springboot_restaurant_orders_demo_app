@@ -7,35 +7,45 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.brandon.spring_api_restaurant_demo.dtos.ApiResponse;
+import com.brandon.spring_api_restaurant_demo.dtos.auth.ChangePasswordRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.RegisterUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.UpdateUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.UserResponseDto;
 import com.brandon.spring_api_restaurant_demo.models.User;
 import com.brandon.spring_api_restaurant_demo.repositories.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class UserService {
 
 	private final CryptoService cryptoService;
-
 	private final UserRepository userRepository;
+	private final JwtService jwtService;
 
 	public UserService(CryptoService cryptoService,
-			UserRepository userRepository) {
+			UserRepository userRepository, JwtService jwtService) {
 		this.cryptoService = cryptoService;
 		this.userRepository = userRepository;
+		this.jwtService = jwtService;
 	}
 
 	public ApiResponse<UserResponseDto> createUser(RegisterUserRequestDto dto) {
-		User newUser = buildUserFromDto(dto);
-		userRepository.save(newUser);
-		return new ApiResponse<UserResponseDto>("OK", HttpStatus.CREATED,
-				buildResponseDtoFromUser(newUser), "");
+		try {
+			User newUser = buildUserFromDto(dto);
+			userRepository.saveAndFlush(newUser);
+		} catch (DataIntegrityViolationException e) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT,
+					"No fue posible crear la cuenta");
+		}
+		return new ApiResponse<UserResponseDto>("OK", HttpStatus.CREATED, null,
+				"");
 	}
 
 	public void validateUserValidToCreate(RegisterUserRequestDto dto) {
@@ -81,6 +91,10 @@ public class UserService {
 
 		return usersApiResponse;
 
+	}
+
+	public Optional<User> getByUsername(String username) {
+		return userRepository.findByUsername(username);
 	}
 
 	public ApiResponse<UserResponseDto> getUserById(Long id) {
@@ -150,6 +164,29 @@ public class UserService {
 		return userRepository.findByUsername(username).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
 						"User not found"));
+	}
+
+	@Transactional
+	public void changePassword(String authorizationToken, ChangePasswordRequestDto dto) {
+		String token = authorizationToken.substring(7);
+		Boolean isTokenExpired = jwtService.isTokenExpired(token);
+		if(isTokenExpired) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"Invalid parameters");
+		}
+		String usernameSubject = jwtService.extractUsername(token);
+		User currentUser = userRepository.findByUsername(usernameSubject).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+				"Invalid parameters"));
+		Boolean ok = cryptoService.validatePassword(dto.currentPassword(), currentUser.getPassword());
+		if(!ok) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"Invalid parameters");
+		}
+		
+		LocalDateTime timestamp = LocalDateTime.now();
+		String hashedPassword = cryptoService.hashPassword(dto.newPassword());
+		currentUser.setPassword(hashedPassword);
+		currentUser.setUpdatedAt(timestamp);
 	}
 
 }

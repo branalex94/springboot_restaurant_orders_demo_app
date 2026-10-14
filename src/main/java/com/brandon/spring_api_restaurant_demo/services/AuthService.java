@@ -4,12 +4,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.UUID;
+
 import com.brandon.spring_api_restaurant_demo.dtos.ApiResponse;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.LoginRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.LoginResponseDto;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.RefreshTokenRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.RegisterUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.models.User;
+import com.brandon.spring_api_restaurant_demo.services.CryptoService;
 
 @Service
 public class AuthService {
@@ -19,33 +22,28 @@ public class AuthService {
 	private final JwtService jwtService;
 	private final RefreshTokenService refreshTokenService;
 
-	public AuthService(UserService userService, CryptoService cryptoService,
-			JwtService jwtService, RefreshTokenService refreshTokenService) {
+	private final String dummyBcryptHash;
+
+	public AuthService(UserService userService, CryptoService cryptoService, JwtService jwtService,
+			RefreshTokenService refreshTokenService) {
 		this.userService = userService;
 		this.cryptoService = cryptoService;
 		this.jwtService = jwtService;
 		this.refreshTokenService = refreshTokenService;
+		this.dummyBcryptHash = cryptoService.hashPassword(UUID.randomUUID().toString());
 	}
 
-	public ApiResponse<LoginResponseDto> validateLogin(String username,
-			String password) {
-		User user = this.userService.getUserByUsername(username);
-		boolean userActive = user.getActive();
-		if (!userActive) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Invalid credentials");
-		}
-		boolean pwValidation = this.cryptoService.validatePassword(password,
-				user.getPassword());
-		if (!pwValidation) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Invalid credentials");
+	public ApiResponse<LoginResponseDto> validateLogin(String username, String password) {
+		User user = userService.getByUsername(username).orElse(null);
+		String hash = user == null ? dummyBcryptHash : user.getPassword();
+		boolean passwordValid = cryptoService.validatePassword(password, hash);
+		if (user == null || !passwordValid || !Boolean.TRUE.equals(user.getActive())) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
 		}
 		String token = jwtService.generateToken(user);
 		String refreshToken = refreshTokenService.create(user);
-		LoginResponseDto tokens = new LoginResponseDto("", token, refreshToken);
-		return new ApiResponse<LoginResponseDto>("OK", HttpStatus.OK, tokens,
-				null);
+		LoginResponseDto tokens = new LoginResponseDto(token, refreshToken);
+		return new ApiResponse<LoginResponseDto>("OK", HttpStatus.OK, tokens, null);
 	}
 
 	public ApiResponse<?> register(RegisterUserRequestDto dto) {
@@ -62,7 +60,6 @@ public class AuthService {
 	}
 
 	public ApiResponse<?> refreshToken(RefreshTokenRequestDto dto) {
-		return new ApiResponse<>("OK", HttpStatus.OK,
-				refreshTokenService.refresh(dto.refreshToken()), "");
+		return new ApiResponse<>("OK", HttpStatus.OK, refreshTokenService.refresh(dto.refreshToken()), "");
 	}
 }

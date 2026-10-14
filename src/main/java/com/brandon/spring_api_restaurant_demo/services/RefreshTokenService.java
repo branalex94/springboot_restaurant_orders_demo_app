@@ -37,18 +37,38 @@ public class RefreshTokenService {
 
 	@Transactional
 	public RefreshTokenResponseDto refresh(String rawRefreshToken) {
+		if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+			throw invalidRefreshToken();
+		}
 
-		RefreshToken refreshToken = validate(rawRefreshToken);
+		String hash = hashToken(rawRefreshToken);
+		LocalDateTime now = LocalDateTime.now();
+		RefreshToken current = refreshTokenRepository.findByTokenHash(hash)
+				.orElseThrow(this::invalidRefreshToken);
+		User user = current.getUser();
 
-		User user = refreshToken.getUser();
+		if (current.isRevoked()) {
+			refreshTokenRepository.revokeAllByUserId(user.getId(), now);
+			throw invalidRefreshToken();
+		}
+		if (!current.getExpiresAt().isAfter(now)) {
+			throw invalidRefreshToken();
+		}
+		if (!Boolean.TRUE.equals(user.getActive())) {
+			refreshTokenRepository.revokeAllByUserId(user.getId(), now);
+			throw invalidRefreshToken();
+		}
+		if (refreshTokenRepository.revokeIfActive(hash, now) != 1) {
+			refreshTokenRepository.revokeAllByUserId(user.getId(), now);
+			throw invalidRefreshToken();
+		}
 
-		revoke(refreshToken);
+		return new RefreshTokenResponseDto(jwtService.generateToken(user), create(user));
+	}
 
-		String newAccessToken = jwtService.generateToken(user);
-
-		String newRefreshToken = create(user);
-
-		return new RefreshTokenResponseDto(newAccessToken, newRefreshToken);
+	private ResponseStatusException invalidRefreshToken() {
+		return new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+				"Invalid refresh token");
 	}
 
 	public RefreshToken validate(String rawRefresh) {
@@ -130,4 +150,11 @@ public class RefreshTokenService {
 					e);
 		}
 	}
+
+// 	@Modifying
+// @Query("""
+//   update RefreshToken t set t.revoked = true, t.updatedAt = :now
+//   where t.tokenHash = :hash and t.revoked = false and t.expiresAt > :now
+// """)
+// int revokeIfActive(@Param("hash") String hash, @Param("now") Instant now);
 }

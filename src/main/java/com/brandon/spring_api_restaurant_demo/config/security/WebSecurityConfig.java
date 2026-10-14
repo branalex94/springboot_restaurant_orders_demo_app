@@ -7,18 +7,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 public class WebSecurityConfig {
 
 	private final JwtAuthFilter jwtFilter;
@@ -47,29 +51,23 @@ public class WebSecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http)
 			throws Exception {
 		http.cors(Customizer.withDefaults())
+			.csrf(csrf -> csrf.disable())
+			.httpBasic(b -> b.disable())
+			.formLogin(f -> f.disable())
 				.sessionManagement(session -> session
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests((requests) -> requests
-						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-						// .requestMatchers("/**").permitAll()
-						.requestMatchers("/api/auth/**").permitAll()
-//				.requestMatchers("/api/users/**").permitAll()
-						.requestMatchers("/error").permitAll()
-						.requestMatchers("/api/**").authenticated()
-
-				// .anyRequest().authenticated()
-				// se
-				// elimino
-				// hasta
-				// entender
-				// como
-				// funciona
-				// el
-				// auth
-				).httpBasic(Customizer.withDefaults())
-				.csrf((csrf) -> csrf.ignoringRequestMatchers("/**"))
-				.addFilterBefore(jwtFilter,
-						UsernamePasswordAuthenticationFilter.class);
+						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.exceptionHandling(exception -> exception
+						.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+						.accessDeniedHandler((req, res, ex) -> res.setStatus(HttpServletResponse.SC_FORBIDDEN))
+					)
+				.authorizeHttpRequests(r -> r
+					.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+					.requestMatchers("/error").permitAll()
+					.requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+					.requestMatchers("/api/admin/**").hasAnyRole("MODERATOR", "ADMIN")
+					.requestMatchers("/api/**").authenticated()
+					.anyRequest().denyAll())
+				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
 }
