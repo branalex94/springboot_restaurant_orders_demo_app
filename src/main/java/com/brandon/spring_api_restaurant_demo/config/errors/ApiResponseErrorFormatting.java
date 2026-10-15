@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,49 +19,52 @@ import java.util.List;
 @RestControllerAdvice
 public class ApiResponseErrorFormatting {
 
-	private static final Log log = LogFactory
-			.getLog(ApiResponseErrorFormatting.class);
+	private static final Log log = LogFactory.getLog(ApiResponseErrorFormatting.class);
 
 	@ExceptionHandler(ResponseStatusException.class)
-	public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(
-			ResponseStatusException ex) {
+	public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(ResponseStatusException ex) {
 
 		log.error("Unexpected error", ex);
 
 		HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
 
-		ApiResponse<Void> response = new ApiResponse<>(ex.getReason(),
-				HttpStatus.valueOf(ex.getStatusCode().value()), null, "ERROR");
+		ApiResponse<Void> response = new ApiResponse<>(ex.getReason(), HttpStatus.valueOf(ex.getStatusCode().value()),
+				null, "ERROR");
 
 		return ResponseEntity.status(status).body(response);
 	}
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiResponse<Void>> handleGenericException(
-			Exception ex) {
+	public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
 
-		ApiResponse<Void> response = new ApiResponse<>("Internal server error",
-				HttpStatus.INTERNAL_SERVER_ERROR, null, "INTERNAL_ERROR");
+		ApiResponse<Void> response = new ApiResponse<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR, null,
+				"INTERNAL_ERROR");
 
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(response);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ApiResponse<Void>> handleArgumentInvalidException(
-			MethodArgumentNotValidException ex) {
+	public ResponseEntity<ApiResponse<Void>> handleArgumentInvalidException(MethodArgumentNotValidException ex) {
 
-		List<ApiFieldError> errors = ex.getBindingResult().getFieldErrors()
-				.stream()
+		List<ApiFieldError> errors = ex.getBindingResult().getFieldErrors().stream()
 				.sorted(Comparator.comparing(error -> error.getField()))
 				.map(error -> new ApiFieldError(error.getField(),
-						error.getDefaultMessage() == null ? "Invalid value"
-								: error.getDefaultMessage()))
+						error.getDefaultMessage() == null ? "Invalid value" : error.getDefaultMessage()))
 				.toList();
 
-		ApiResponse<Void> response = new ApiResponse<>("Validation failed",
-				HttpStatus.BAD_REQUEST, null, "VALIDATION_ERROR", errors);
+		ApiResponse<Void> response = new ApiResponse<>("Validation failed", HttpStatus.BAD_REQUEST, null,
+				"VALIDATION_ERROR", errors);
 
 		return ResponseEntity.badRequest().body(response);
+	}
+
+	@ExceptionHandler(AuthorizationDeniedException.class)
+	public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AuthorizationDeniedException ex) {
+
+		ApiResponse<Void> response = new ApiResponse<>("You do not have permission to perform this action",
+				HttpStatus.BAD_REQUEST, null, "VALIDATION_ERROR", null);
+
+		return ResponseEntity.badRequest().body(response);
+
 	}
 }
