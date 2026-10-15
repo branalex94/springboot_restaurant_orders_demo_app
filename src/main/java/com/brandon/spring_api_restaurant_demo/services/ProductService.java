@@ -14,6 +14,8 @@ import com.brandon.spring_api_restaurant_demo.dtos.products.UpdateProductRequest
 import com.brandon.spring_api_restaurant_demo.models.Product;
 import com.brandon.spring_api_restaurant_demo.repositories.ProductRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class ProductService {
 
@@ -45,6 +47,7 @@ public class ProductService {
 				buildDtoFromProduct(product), null);
 	}
 
+	@Transactional
 	public ApiResponse<?> updateProduct(Long id, UpdateProductRequestDto dto) {
 		Product product = findById(id);
 		if (dto.name() != null) {
