@@ -26,13 +26,14 @@ public class ProductService {
 		this.productRepository = productRepository;
 	}
 
-	public ApiResponse<?> createProduct(CreateProductRequestDto dto) {
+	public ApiResponse<ProductResponseDto> createProduct(CreateProductRequestDto dto) {
 		LocalDateTime creationDate = LocalDateTime.now();
 		Product product = new Product(dto.name(), dto.unitPrice(), creationDate,
 				creationDate);
-		product.setActive(1);
+		product.setActive(ActiveStatus.ACTIVE.getValue());
 		productRepository.save(product);
-		return new ApiResponse<>("OK", HttpStatus.CREATED, null, "");
+		ProductResponseDto productDto = buildDtoFromProduct(product);
+		return new ApiResponse<>("OK", HttpStatus.CREATED, productDto, "");
 	}
 
 	public ApiResponse<List<ProductResponseDto>> getProducts() {
@@ -71,7 +72,7 @@ public class ProductService {
 				buildDtoFromProduct(product), null);
 	}
 
-	private Product findById(Long id) {
+	public Product findById(Long id) {
 		return productRepository.findById(id).orElseThrow(
 				() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
 						"Product not found"));

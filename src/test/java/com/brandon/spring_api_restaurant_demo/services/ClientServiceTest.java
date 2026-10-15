@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import com.brandon.spring_api_restaurant_demo.dtos.ApiResponse;
 import com.brandon.spring_api_restaurant_demo.dtos.clients.ClientResponseDto;
 import com.brandon.spring_api_restaurant_demo.dtos.clients.CreateClientRequestDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.models.Client;
 import com.brandon.spring_api_restaurant_demo.repositories.ClientRepository;
 
@@ -39,13 +40,13 @@ class ClientServiceTest {
 
 		ArgumentCaptor<Client> client = ArgumentCaptor.forClass(Client.class);
 		verify(clientRepository).save(client.capture());
-		assertTrue(client.getValue().isActive());
+		assertTrue(client.getValue().isActive() == ActiveStatus.ACTIVE.getValue());
 	}
 
 	@Test
 	void clientListExposesContactFieldsAndActiveState() {
-		Client active = client(1L, true);
-		Client inactive = client(2L, false);
+		Client active = client(1L, ActiveStatus.ACTIVE.getValue());
+		Client inactive = client(2L, ActiveStatus.INACTIVE.getValue());
 		when(clientRepository.findAll()).thenReturn(List.of(active, inactive));
 
 		ApiResponse<List<ClientResponseDto>> response = clientService.getClients();
@@ -55,15 +56,15 @@ class ClientServiceTest {
 		ClientResponseDto dto = response.data().get(0);
 		assertEquals("555-0100", dto.phone());
 		assertEquals("ana@example.test", dto.email());
-		assertTrue(dto.active());
+		assertTrue(dto.active() == ActiveStatus.ACTIVE.getValue());
 		assertEquals(false, response.data().get(1).active());
 	}
 
-	private Client client(Long id, boolean active) {
+	private Client client(Long id, int active) {
 		Client client = new Client("Ana", "ana@example.test", "555-0100",
 				LocalDateTime.now(), LocalDateTime.now());
 		client.setId(id);
-		client.setActive(active);
+		client.setActive(ActiveStatus.ACTIVE.getValue());
 		return client;
 	}
 }

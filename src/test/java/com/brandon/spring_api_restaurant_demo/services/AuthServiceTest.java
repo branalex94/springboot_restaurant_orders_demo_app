@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import com.brandon.spring_api_restaurant_demo.dtos.ApiResponse;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.LoginResponseDto;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.RefreshTokenRequestDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.models.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +43,7 @@ class AuthServiceTest {
 		String password = "correct-horse-battery";
 		User user = org.mockito.Mockito.mock(User.class);
 		when(userService.getByUsername("manager")).thenReturn(Optional.of(user));
-		when(user.getActive()).thenReturn(true);
+		when(user.getActive()).thenReturn(ActiveStatus.ACTIVE.getValue());
 		when(user.getPassword()).thenReturn("stored-hash");
 		when(cryptoService.validatePassword(password, "stored-hash"))
 				.thenReturn(true);
