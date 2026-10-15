@@ -11,6 +11,7 @@ import com.brandon.spring_api_restaurant_demo.dtos.auth.LoginRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.LoginResponseDto;
 import com.brandon.spring_api_restaurant_demo.dtos.auth.RefreshTokenRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.RegisterUserRequestDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.models.User;
 import com.brandon.spring_api_restaurant_demo.services.CryptoService;
 
@@ -40,7 +41,7 @@ public class AuthService {
 		if (user == null || !passwordValid) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
 		}
-		if (user.getActive() != 1) {
+		if (user.getActive() != ActiveStatus.ACTIVE.getValue()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid params");
 		}
 		String token = jwtService.generateToken(user);

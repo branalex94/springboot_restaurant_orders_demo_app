@@ -1,0 +1,15 @@
+package com.brandon.spring_api_restaurant_demo.enums;
+
+public enum ActiveStatus {
+	INACTIVE(0), ACTIVE(1), SUSPENDED(2);
+
+	private final int value;
+
+	ActiveStatus(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+}
