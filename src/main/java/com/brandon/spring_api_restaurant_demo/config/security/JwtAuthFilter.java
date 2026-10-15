@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,6 @@ import com.brandon.spring_api_restaurant_demo.models.User;
 import com.brandon.spring_api_restaurant_demo.services.JwtService;
 import com.brandon.spring_api_restaurant_demo.services.UserService;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,8 +34,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
-			FilterChain chain)
+	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
 			throws ServletException, IOException {
 
 		String header = req.getHeader(HttpHeaders.AUTHORIZATION);
@@ -46,8 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 					SecurityContextHolder.clearContext();
 				} else {
 					String username = jwtService.extractUsername(token);
-					userService.getByUsername(username)
-							.filter(user -> Boolean.TRUE.equals(user.getActive()))
+					userService.getByUsername(username).filter(user -> user.getActive() == 1)
 							.ifPresentOrElse(this::authenticate, SecurityContextHolder::clearContext);
 				}
 			} catch (JwtException | IllegalArgumentException ex) {
@@ -58,14 +56,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 	}
 
 	private void authenticate(User user) {
-		List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-				.map(Role::getName)
-				.map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-				.map(SimpleGrantedAuthority::new)
+		List<SimpleGrantedAuthority> authorities = user.getRoles().stream().map(Role::getName)
+				.map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role).map(SimpleGrantedAuthority::new)
 				.toList();
 
-		SecurityContextHolder.getContext().setAuthentication(
-				new UsernamePasswordAuthenticationToken(user.getUsername(), null,
-						authorities));
+		SecurityContextHolder.getContext()
+				.setAuthentication(new UsernamePasswordAuthenticationToken(user.getUsername(), null, authorities));
 	}
 }

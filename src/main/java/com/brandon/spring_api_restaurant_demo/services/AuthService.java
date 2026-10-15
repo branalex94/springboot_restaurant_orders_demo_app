@@ -37,8 +37,11 @@ public class AuthService {
 		User user = userService.getByUsername(username).orElse(null);
 		String hash = user == null ? dummyBcryptHash : user.getPassword();
 		boolean passwordValid = cryptoService.validatePassword(password, hash);
-		if (user == null || !passwordValid || !Boolean.TRUE.equals(user.getActive())) {
+		if (user == null || !passwordValid) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+		}
+		if (user.getActive() != 1) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid params");
 		}
 		String token = jwtService.generateToken(user);
 		String refreshToken = refreshTokenService.create(user);
