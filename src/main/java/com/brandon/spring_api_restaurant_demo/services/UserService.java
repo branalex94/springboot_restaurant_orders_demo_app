@@ -17,6 +17,7 @@ import com.brandon.spring_api_restaurant_demo.dtos.auth.ChangePasswordRequestDto
 import com.brandon.spring_api_restaurant_demo.dtos.users.RegisterUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.UpdateUserRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.users.UserResponseDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.models.Role;
 import com.brandon.spring_api_restaurant_demo.models.User;
 import com.brandon.spring_api_restaurant_demo.repositories.RoleRepository;
@@ -67,7 +68,7 @@ public class UserService {
 		LocalDateTime creationDate = LocalDateTime.now();
 		String hashedPassword = this.cryptoService.hashPassword(dto.password());
 		User newUser = new User(dto.username().trim(), hashedPassword, dto.email().trim(), dto.phone().trim(),
-				dto.firstName().trim(), dto.lastName().trim(), creationDate, creationDate, 1);
+				dto.firstName().trim(), dto.lastName().trim(), creationDate, creationDate, ActiveStatus.ACTIVE.getValue());
 		System.out.println(newUser.getActive());
 		return newUser;
 	}
@@ -85,7 +86,7 @@ public class UserService {
 	}
 
 	public ApiResponse<List<UserResponseDto>> getUsers() {
-		List<UserResponseDto> allUsers = userRepository.findAll().stream().filter(u -> u.getActive() == 1)
+		List<UserResponseDto> allUsers = userRepository.findAll().stream().filter(u -> u.getActive() == ActiveStatus.ACTIVE.getValue())
 				.map(u -> buildResponseDtoFromUser(u)).toList();
 		ApiResponse<List<UserResponseDto>> usersApiResponse = new ApiResponse<>("OK", HttpStatus.OK, allUsers, "");
 
@@ -143,11 +144,12 @@ public class UserService {
 
 	public ApiResponse<Void> removeUser(Long id) {
 
-		changeUserActiveState(id, 0);
+		changeUserActiveState(id, ActiveStatus.INACTIVE.getValue());
 		return new ApiResponse<>("OK", HttpStatus.OK, null, "");
 
 	}
 
+	@Transactional
 	public void changeUserActiveState(Long id, int state) {
 		User user = findById(id);
 
@@ -155,7 +157,6 @@ public class UserService {
 
 		user.setActive(state);
 		user.setUpdatedAt(updateTime);
-		userRepository.save(user);
 	}
 
 	public User getUserByUsername(String username) {

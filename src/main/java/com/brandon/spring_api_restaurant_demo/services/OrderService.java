@@ -18,6 +18,7 @@ import com.brandon.spring_api_restaurant_demo.dtos.orders.CreateOrderRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.orders.OrderProductResponseDto;
 import com.brandon.spring_api_restaurant_demo.dtos.orders.UpdateOrderStatusRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.products.OrderResponseDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.enums.OrderStatus;
 import com.brandon.spring_api_restaurant_demo.models.Client;
 import com.brandon.spring_api_restaurant_demo.models.Order;
@@ -116,7 +117,7 @@ public class OrderService {
 
 	public ApiResponse<?> cancelOrder(Long id) {
 		Order order = findById(id);
-		order.setActive(0);
+		order.setActive(ActiveStatus.INACTIVE.getValue());
 		order.setOrderStatus(OrderStatus.CANCELLED);
 		updateOrderStatusHistory(order, OrderStatus.CANCELLED);
 		order.setUpdatedAt(LocalDateTime.now());

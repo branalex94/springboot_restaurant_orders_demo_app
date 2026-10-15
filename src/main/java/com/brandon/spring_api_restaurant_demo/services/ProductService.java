@@ -11,6 +11,7 @@ import com.brandon.spring_api_restaurant_demo.dtos.ApiResponse;
 import com.brandon.spring_api_restaurant_demo.dtos.products.CreateProductRequestDto;
 import com.brandon.spring_api_restaurant_demo.dtos.products.ProductResponseDto;
 import com.brandon.spring_api_restaurant_demo.dtos.products.UpdateProductRequestDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.models.Product;
 import com.brandon.spring_api_restaurant_demo.repositories.ProductRepository;
 
@@ -63,7 +64,7 @@ public class ProductService {
 
 	public ApiResponse<?> disableProduct(Long id) {
 		Product product = findById(id);
-		product.setActive(0);
+		product.setActive(ActiveStatus.INACTIVE.getValue());
 		product.setUpdatedAt(LocalDateTime.now());
 		productRepository.save(product);
 		return new ApiResponse<>("OK", HttpStatus.OK,

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.brandon.spring_api_restaurant_demo.dtos.auth.RefreshTokenResponseDto;
+import com.brandon.spring_api_restaurant_demo.enums.ActiveStatus;
 import com.brandon.spring_api_restaurant_demo.models.RefreshToken;
 import com.brandon.spring_api_restaurant_demo.models.User;
 import com.brandon.spring_api_restaurant_demo.repositories.RefreshTokenRepository;
@@ -54,7 +55,7 @@ public class RefreshTokenService {
 		if (!current.getExpiresAt().isAfter(now)) {
 			throw invalidRefreshToken();
 		}
-		if (!Boolean.TRUE.equals(user.getActive())) {
+		if (user.getActive() == ActiveStatus.INACTIVE.getValue()) {
 			refreshTokenRepository.revokeAllByUserId(user.getId(), now);
 			throw invalidRefreshToken();
 		}
